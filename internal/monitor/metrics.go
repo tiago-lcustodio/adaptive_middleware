@@ -135,5 +135,7 @@ func (sm *SystemMetrics) Snapshot() (p95Latency time.Duration, errorRate float64
 	sm.ingressMessages = 0
 	sm.lastWindowTime = now
 
+	sm.latencies = make([]time.Duration, 0, 1000)
+
 	return
 }
