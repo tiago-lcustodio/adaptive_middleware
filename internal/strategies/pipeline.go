@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"adaptive-middleware/internal/monitor"
 	"adaptive-middleware/internal/network"
 )
 
@@ -23,16 +24,18 @@ type PipelineMessage struct {
 type StagedPipeline struct {
 	storageDir string
 	downstream *network.DownstreamClient
+	metrics    *monitor.SystemMetrics
 }
 
 // NewStagedPipeline inicializa e garante a existência da pasta de persistência local
-func NewStagedPipeline(downstream *network.DownstreamClient) *StagedPipeline {
+func NewStagedPipeline(downstream *network.DownstreamClient, metrics *monitor.SystemMetrics) *StagedPipeline {
 	dir := ".storage_pipeline"
 	_ = os.MkdirAll(dir, 0755) // Cria a pasta oculta se não existir
 
 	return &StagedPipeline{
 		storageDir: dir,
 		downstream: downstream,
+		metrics:    metrics,
 	}
 }
 
@@ -58,6 +61,9 @@ func (sp *StagedPipeline) SaveToDisk(id string, topic string, payload []byte) er
 	if err != nil {
 		return fmt.Errorf("erro ao escrever no disco: %v", err)
 	}
+
+	// ATUALIZAÇÃO DO DISCO: Incrementa o medidor do Prometheus a cada arquivo gerado
+	monitor.DiskBufferGauge.Inc()
 
 	fmt.Printf("[ESTRATÉGIA] [PIPELINE] Mensagem %s custodiada em disco com sucesso.\n", id)
 	return nil
@@ -91,14 +97,26 @@ func (sp *StagedPipeline) FlushDisk() {
 		var pMsg PipelineMessage
 		if err := json.Unmarshal(bytes, &pMsg); err != nil {
 			_ = os.Remove(filePath) // Remove arquivos corrompidos
+			// ATUALIZAÇÃO DO DISCO: Decrementa o medidor do Prometheus ao descartar arquivo inválido
+			monitor.DiskBufferGauge.Dec()
 			continue
 		}
+
+		// AJUSTE DE QOS: Calcula o tempo em que a mensagem ficou retida em disco (Frescor do Dado)
+		tempoEmDisco := time.Duration(time.Now().UnixNano() - pMsg.Timestamp)
 
 		// Tenta re-enviar pelo canal oficial
 		err = sp.downstream.PublishMessage("unioeste/iot/receiver", pMsg.Payload)
 		if err == nil {
 			// Se deu sucesso, apaga o arquivo do disco imediatamente
 			_ = os.Remove(filePath)
+
+			// Grava a telemetria do atraso acumulado para expor a latência de custódia real no P95
+			sp.metrics.RecordDelivery(tempoEmDisco, true)
+
+			// ATUALIZAÇÃO DO DISCO: Decrementa o medidor do Prometheus ao limpar arquivo enviado
+			monitor.DiskBufferGauge.Dec()
+
 			fmt.Printf("[ESTRATÉGIA] [PIPELINE] Mensagem %s descarregada e limpa do disco.\n", pMsg.ID)
 			time.Sleep(10 * time.Millisecond) // Evita sobrecarga de vazão imediata (backpressure leve)
 		} else {

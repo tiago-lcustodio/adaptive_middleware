@@ -90,6 +90,9 @@ func (d *Dispatcher) IngestMessage(msg Message) {
 }
 
 func (d *Dispatcher) routeMessage(msg Message) {
+	// ATUALIZAÇÃO DA FILA: Mede a quantidade de mensagens no canal Go a cada roteamento
+	monitor.QueueSizeGauge.Set(float64(len(d.inputChan)))
+
 	currentState := d.metrics.GetState()
 
 	switch currentState {
@@ -112,12 +115,26 @@ func (d *Dispatcher) routeMessage(msg Message) {
 
 func (d *Dispatcher) executeNormal(msg Message) {
 	topicDestino := "unioeste/iot/receiver"
+	startTime := time.Now()
 	err := d.downstream.PublishMessage(topicDestino, msg.Payload)
+	latency := time.Since(startTime)
 
 	if err != nil {
+		// 1. Registra a falha no monitor para alimentar o cálculo de thresholds do Analyzer
 		monitor.ProcessedMessagesCounter.WithLabelValues("NORMAL", "falha").Inc()
+		d.metrics.RecordDelivery(latency, false)
+
+		// 2. AJUSTE DE RESILIÊNCIA: Fast-Failover preventivo evita o descarte de dados na janela de convergência
+		fmt.Printf("[ROUTER] [REMEDIAÇÃO] Downstream offline em modo NORMAL. Salvando MSG %s no Pipeline preventivamente.\n", msg.ID)
+		errPipeline := d.pipeline.SaveToDisk(msg.ID, msg.Topic, msg.Payload)
+
+		if errPipeline == nil {
+			monitor.ProcessedMessagesCounter.WithLabelValues("OUTAGE", "staged").Inc()
+		}
 	} else {
+		// Sucesso operacional limpo
 		monitor.ProcessedMessagesCounter.WithLabelValues("NORMAL", "sucesso").Inc()
+		d.metrics.RecordDelivery(latency, true)
 	}
 }
 

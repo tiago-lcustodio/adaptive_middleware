@@ -43,10 +43,9 @@ func (sm *SystemMetrics) SetState(state MiddlewareState) {
 	sm.currentState = state
 
 	// 2. Reseta o valor do estado anterior para 0 (opcional, para limpar o gráfico)
-	// Se quiser que apenas uma estratégia fique com valor '1' por vez:
 	ActiveStrategyGauge.Reset()
 
-	// 3. Define o valor numérico correspondente à estratégia ativa
+	// 3. Define o valor numérico correspondente à estratégia activa
 	var valor float64
 	switch state {
 	case StateNormal:

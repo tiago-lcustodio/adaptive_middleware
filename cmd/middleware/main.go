@@ -31,7 +31,8 @@ func main() {
 		fmt.Printf("[SYSTEM] [AVISO] Receiver offline na inicialização: %v\n", err)
 	}
 
-	pipelineStrategy := strategies.NewStagedPipeline(downstreamClient)
+	// ATUALIZADO: Injeta o ponteiro de metrics para habilitar cálculo de latência de custódia (P95) no Flush
+	pipelineStrategy := strategies.NewStagedPipeline(downstreamClient, metrics)
 	resilienceStrategy := strategies.NewResilienceStrategies(downstreamClient)
 	// NOVO: Instancia o módulo das estratégias de tráfego (Throttling / Ring Eviction)
 	trafficStrategy := strategies.NewTrafficStrategies(downstreamClient)

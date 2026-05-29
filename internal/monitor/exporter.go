@@ -27,6 +27,18 @@ var (
 		},
 		[]string{"strategy", "status"},
 	)
+
+	// NOVO: Medidor da fila em memória (canal do Go)
+	QueueSizeGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "middleware_queue_size",
+		Help: "Quantidade atual de mensagens aguardando processamento no canal interno.",
+	})
+
+	// NOVO: Medidor de acúmulo de arquivos físicos em disco do Pipeline
+	DiskBufferGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "middleware_pipeline_disk_messages",
+		Help: "Quantidade de mensagens persistidas em disco aguardando o Receiver voltar.",
+	})
 )
 
 type Exporter struct {
@@ -38,6 +50,10 @@ type Exporter struct {
 func NewExporter(cfg *config.Config, metrics *SystemMetrics) *Exporter {
 	prometheus.MustRegister(ActiveStrategyGauge)
 	prometheus.MustRegister(ProcessedMessagesCounter)
+	// NOVO: Registro das novas métricas de infraestrutura
+	prometheus.MustRegister(QueueSizeGauge)
+	prometheus.MustRegister(DiskBufferGauge)
+
 	ActiveStrategyGauge.WithLabelValues(string(StateNormal)).Set(0)
 	return &Exporter{
 		cfg:     cfg,
