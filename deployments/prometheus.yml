@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 1s # Varre os alvos segundo a segundo para não perder picos milissegundos
+  evaluation_interval: 1s
+
+scrape_configs:
+  - job_name: 'middleware-adaptativo'
+    static_configs:
+      # host.docker.internal faz o container Docker enxergar o Go rodando nativo no seu Xubuntu
+      - targets: ['host.docker.internal:8082']
