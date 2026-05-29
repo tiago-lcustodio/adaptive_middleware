@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+  mosquitto_downstream:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto_unioeste_downstream
+    restart: unless-stopped
+    ports:
+      - "1884:1883" # Mapeia a porta 1883 interna do container para a 1884 do seu Linux (Lenovo)
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus_unioeste

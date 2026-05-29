@@ -60,9 +60,8 @@ func (d *Dispatcher) Start() {
 				}
 				d.routeMessage(msg)
 			case <-flushTicker.C:
-				if d.metrics.GetState() == monitor.StateNormal {
-					go d.pipeline.FlushDisk()
-				}
+				// O próprio pipeline.go já checa se a conexão voltou antes de ler o disco
+				go d.pipeline.FlushDisk()
 			case <-d.stopChannel:
 				fmt.Println("[ROUTER] Encerrando o despachante de tráfego...")
 				return
