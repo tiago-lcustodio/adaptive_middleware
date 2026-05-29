@@ -28,10 +28,10 @@ type Config struct {
 // LoadConfig inicializa os valores buscando do ambiente ou aplicando defaults
 func LoadConfig() *Config {
 	return &Config{
-		TTSEndpoint:           getEnv("TTS_ENDPOINT", "tcp://localhost:1883"),
-		TTSUser:               getEnv("TTS_USER", "my-app-id@ttn"),
-		TTSPassword:           getEnv("TTS_PASSWORD", "NNSXS.MINHA_API_KEY_SECURE"),
-		TTSTopic:              getEnv("TTS_TOPIC", "v3/+/devices/+/up"),
+		TTSEndpoint:           getEnv("TTS_ENDPOINT", "tcp://eu1.cloud.thethings.network:1883"),
+		TTSUser:               getEnv("TTS_USER", "custodiotiago"),
+		TTSPassword:           getEnv("TTS_PASSWORD", "NNSXS.YI4HFKJAME7G64SV4DL74KKAMZDMWXFEUJ4QB5Y.CBQDXBFJM4WQ6WMAMAU5TLHBM7GP4J3P2KXRBR3JB5SVATKNJKRA"),
+		TTSTopic:              getEnv("TTS_TOPIC", "v3/custodiotiago@ttn/devices/+/up"),
 		ReceiverEndpoint:      getEnv("RECEIVER_ENDPOINT", "tcp://localhost:1884"),
 		PrometheusPort:        getEnv("PROMETHEUS_PORT", ":8082"),
 		SlowConsumerThreshold: 2 * time.Second,

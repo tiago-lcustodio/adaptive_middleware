@@ -50,6 +50,7 @@ func (tl *TTSListener) Start() error {
 
 	// Define a função de callback que será disparada toda vez que uma mensagem chegar da rede
 	messageHandler := func(client mqtt.Client, mqttMsg mqtt.Message) {
+		fmt.Printf("[MQTT-UPSTREAM] [SUCESSO] Mensagem recebida do TTS! Tópico: %s | Bytes: %d\n", mqttMsg.Topic(), len(mqttMsg.Payload()))
 		// Encapsula o pacote de rede bruto na estrutura interna do middleware
 		msg := Message{
 			ID:        fmt.Sprintf("MSG-REAL-%d", time.Now().UnixNano()), // ID gerado por timestamp de alta precisão
