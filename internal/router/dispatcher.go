@@ -111,8 +111,12 @@ func (d *Dispatcher) routeMessage(msg Message) {
 func (d *Dispatcher) executeNormal(msg Message) {
 	topicDestino := "unioeste/iot/receiver"
 	err := d.downstream.PublishMessage(topicDestino, msg.Payload)
+
+	// NOVO: Incrementa o contador para o Prometheus registrar que a mensagem passou no modo NORMAL
 	if err != nil {
-		_ = err
+		monitor.ProcessedMessagesCounter.WithLabelValues("NORMAL", "falha").Inc()
+	} else {
+		monitor.ProcessedMessagesCounter.WithLabelValues("NORMAL", "sucesso").Inc()
 	}
 }
 
