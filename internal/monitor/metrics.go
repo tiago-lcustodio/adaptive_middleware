@@ -38,7 +38,35 @@ func NewSystemMetrics() *SystemMetrics {
 func (sm *SystemMetrics) SetState(state MiddlewareState) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
+
+	// 1. Atualiza o estado interno na memória do Go
 	sm.currentState = state
+
+	// 2. Reseta o valor do estado anterior para 0 (opcional, para limpar o gráfico)
+	// Se quiser que apenas uma estratégia fique com valor '1' por vez:
+	ActiveStrategyGauge.Reset()
+
+	// 3. Define o valor numérico correspondente à estratégia ativa
+	var valor float64
+	switch state {
+	case StateNormal:
+		valor = 0
+	case StateOutage: // Aciona Staged Pipeline
+		valor = 1
+	case StateSlowConsumer: // Aciona Circuit Breaker
+		valor = 2
+	case StateFlapping: // Aciona Throttling
+		valor = 3
+	case StateLossyLink: // Aciona Replicação Ativa
+		valor = 4
+	case StateTrafficSpike: // Aciona Ring Buffer
+		valor = 5
+	default:
+		valor = 0
+	}
+
+	// 4. Publica a métrica atualizada com o Rótulo Correto para o Prometheus coletar
+	ActiveStrategyGauge.WithLabelValues(string(state)).Set(valor)
 }
 
 func (sm *SystemMetrics) GetState() MiddlewareState {
