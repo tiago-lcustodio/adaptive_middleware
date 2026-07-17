@@ -12,3 +12,7 @@ go run cmd/middleware/main.go
 Falha 2  
 docker stop mosquitto_unioeste_downstream  
 docker start mosquitto_unioeste_downstream
+
+Outra opção  
+sudo iptables -A OUTPUT -p tcp --dport 1884 -j REJECT  
+sudo iptables -D OUTPUT -p tcp --dport 1884 -j REJECT  
