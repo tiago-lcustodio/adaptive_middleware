@@ -19,5 +19,5 @@ sudo iptables -D OUTPUT -p tcp --dport 1884 -j REJECT
 
 Se precisar derrubar o Prometheus  
 sudo killall main  
-# Ou force pelo número da porta:  
+Ou force pelo número da porta:  
 sudo fuser -k 8082/tcp  
