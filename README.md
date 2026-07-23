@@ -21,3 +21,10 @@ Se precisar derrubar o Prometheus
 sudo killall main  
 Ou force pelo número da porta:  
 sudo fuser -k 8082/tcp  
+
+Se falhar derrrubar os containeres todos da aplicação  
+sudo systemctl stop docker containerd  
+sudo killall -9 containerd-shim containerd-shim-runc-v2  
+sudo systemctl start containerd docker  
+sudo docker rm -f $(sudo docker ps -aq)  
+sudo docker compose -f deployments/docker-compose.yml up -d  
