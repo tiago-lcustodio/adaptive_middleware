@@ -18,6 +18,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090" # Porta da interface de consultas do Prometheus
+      - "8082:8082" # Porta de métricas do middleware exposta para a máquina hospedeira (localhost)
     extra_hosts:
       - "host.docker.internal:host-gateway" # Permite ao container falar com o host Linux
 
@@ -26,7 +27,7 @@ services:
     container_name: grafana_unioeste
     restart: unless-stopped
     ports:
-      - "3000:3000" # Porta de acesso aos painéis visuais
+      - "3000:3000" # Porta de acesso aos painéis visuais      
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin # Senha padrão para seu login inicial
     volumes:

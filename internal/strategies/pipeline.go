@@ -71,9 +71,11 @@ func (sp *StagedPipeline) SaveToDisk(id string, topic string, payload []byte) er
 
 // FlushDisk tenta esvaziar a pasta local reenviando os dados armazenados para o Receiver
 // Esta função será chamada automaticamente pelo despachante ou quando houver janelas operacionais
+// FlushDisk tenta esvaziar a pasta local reenviando os dados armazenados para o Receiver
+// Esta função será chamada automaticamente pelo despachante ou quando houver janelas operacionais
 func (sp *StagedPipeline) FlushDisk() {
 	if !sp.downstream.IsConnected() {
-		return // Se o link de saída continuar caído, não gasta CPU tentando ler disco
+		return
 	}
 
 	files, err := os.ReadDir(sp.storageDir)
@@ -96,31 +98,32 @@ func (sp *StagedPipeline) FlushDisk() {
 
 		var pMsg PipelineMessage
 		if err := json.Unmarshal(bytes, &pMsg); err != nil {
-			_ = os.Remove(filePath) // Remove arquivos corrompidos
-			// ATUALIZAÇÃO DO DISCO: Decrementa o medidor do Prometheus ao descartar arquivo inválido
+			_ = os.Remove(filePath)
 			monitor.DiskBufferGauge.Dec()
 			continue
 		}
 
-		// AJUSTE DE QOS: Calcula o tempo em que a mensagem ficou retida em disco (Frescor do Dado)
 		tempoEmDisco := time.Duration(time.Now().UnixNano() - pMsg.Timestamp)
 
-		// Tenta re-enviar pelo canal oficial
+		// Tenta reenviar a mensagem
 		err = sp.downstream.PublishMessage("unioeste/iot/receiver", pMsg.Payload)
 		if err == nil {
-			// Se deu sucesso, apaga o arquivo do disco imediatamente
 			_ = os.Remove(filePath)
 
-			// Grava a telemetria do atraso acumulado para expor a latência de custódia real no P95
+			// 1. Alimenta os dados de entrega de sucesso na memória do Go
 			sp.metrics.RecordDelivery(tempoEmDisco, true)
 
-			// ATUALIZAÇÃO DO DISCO: Decrementa o medidor do Prometheus ao limpar arquivo enviado
+			// 2. INCREMENTA O CONTADOR DO PROMETHEUS (Crucial para o Grafana!)
+			monitor.ProcessedMessagesCounter.WithLabelValues("OUTAGE", "sucesso").Inc()
+
+			// 3. Atualiza o Gauge do disco
 			monitor.DiskBufferGauge.Dec()
 
 			fmt.Printf("[ESTRATÉGIA] [PIPELINE] Mensagem %s descarregada e limpa do disco.\n", pMsg.ID)
-			time.Sleep(10 * time.Millisecond) // Evita sobrecarga de vazão imediata (backpressure leve)
+
+			// Pequeno intervalo para permitir a coleta pelo Prometheus/Grafana sem engasgar
+			time.Sleep(20 * time.Millisecond)
 		} else {
-			// Se falhou (ex: receptor caiu de novo no meio do flush), interrompe o ciclo para tentar mais tarde
 			break
 		}
 	}
