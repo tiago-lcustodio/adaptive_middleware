@@ -39,6 +39,12 @@ var (
 		Name: "middleware_pipeline_disk_messages",
 		Help: "Quantidade de mensagens persistidas em disco aguardando o Receiver voltar.",
 	})
+
+	// ADICIONADO: Medidor da latência P95 em segundos calculada na janela de amostragem
+	DeliveryLatencyGauge = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "middleware_delivery_latency_seconds",
+		Help: "Latencia de entrega P95 calculada na ultima janela de amostragem.",
+	})
 )
 
 type Exporter struct {
@@ -53,6 +59,8 @@ func NewExporter(cfg *config.Config, metrics *SystemMetrics) *Exporter {
 	// NOVO: Registro das novas métricas de infraestrutura
 	prometheus.MustRegister(QueueSizeGauge)
 	prometheus.MustRegister(DiskBufferGauge)
+	// ADICIONADO: Registro do medidor de latência P95
+	prometheus.MustRegister(DeliveryLatencyGauge)
 
 	ActiveStrategyGauge.WithLabelValues(string(StateNormal)).Set(0)
 	return &Exporter{

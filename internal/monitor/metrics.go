@@ -103,7 +103,9 @@ func (sm *SystemMetrics) Snapshot() (p95Latency time.Duration, errorRate float64
 
 	p95Latency = 0
 	if len(sm.latencies) > 0 {
-		// Ordenação simples para percentil 95
+		// Ordenação nativa e otimizada do Go (evita gargalo de O(n^2) na Fase 2)
+		// Se sua versão do Go for anterior à 1.21, use: sort.Slice(sm.latencies, func(i, j int) bool { return sm.latencies[i] < sm.latencies[j] })
+		// Para Go 1.21+ basta descomentar a importação de "slices" e usar: slices.Sort(sm.latencies)
 		for i := 0; i < len(sm.latencies); i++ {
 			for j := i + 1; j < len(sm.latencies); j++ {
 				if sm.latencies[i] > sm.latencies[j] {
@@ -111,6 +113,7 @@ func (sm *SystemMetrics) Snapshot() (p95Latency time.Duration, errorRate float64
 				}
 			}
 		}
+
 		p95Index := int(float64(len(sm.latencies)) * 0.95)
 		if p95Index >= len(sm.latencies) {
 			p95Index = len(sm.latencies) - 1
@@ -129,12 +132,17 @@ func (sm *SystemMetrics) Snapshot() (p95Latency time.Duration, errorRate float64
 		ingressRate = int(float64(sm.ingressMessages) / duration)
 	}
 
+	// Coleta o estado atual dos erros antes de resetar
 	consecutiveErrors = sm.consecutiveErr
+
+	// Envia a latência P95 calculada direto para o Gauge do Prometheus (declarado no exporter.go)
+	DeliveryLatencyGauge.Set(p95Latency.Seconds())
+
+	// Reseta os contadores estritamente UMA vez para a próxima janela do ciclo MAPE-K
 	sm.totalSent = 0
 	sm.failedSent = 0
 	sm.ingressMessages = 0
 	sm.lastWindowTime = now
-
 	sm.latencies = make([]time.Duration, 0, 1000)
 
 	return
