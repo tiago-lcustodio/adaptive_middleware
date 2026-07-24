@@ -113,10 +113,13 @@ func (sp *StagedPipeline) FlushDisk() {
 			// 1. Alimenta os dados de entrega de sucesso na memória do Go
 			sp.metrics.RecordDelivery(tempoEmDisco, true)
 
-			// 2. INCREMENTA O CONTADOR DO PROMETHEUS (Crucial para o Grafana!)
+			// 2. INCREMENTA O CONTADOR GERAL DE SUCESSO (Opcional, se quiser manter)
 			monitor.ProcessedMessagesCounter.WithLabelValues("OUTAGE", "sucesso").Inc()
 
-			// 3. Atualiza o Gauge do disco
+			// 3. INCREMENTA O CONTADOR DEDICADO DE RECUPERAÇÃO DO DISCO (Para a Query B do Grafana)
+			monitor.RecoveredMessagesCounter.WithLabelValues("OUTAGE").Inc()
+
+			// 4. Atualiza o Gauge do disco
 			monitor.DiskBufferGauge.Dec()
 
 			fmt.Printf("[ESTRATÉGIA] [PIPELINE] Mensagem %s descarregada e limpa do disco.\n", pMsg.ID)

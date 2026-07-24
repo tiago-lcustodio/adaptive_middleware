@@ -4,6 +4,8 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type MiddlewareState string
@@ -16,6 +18,23 @@ const (
 	StateLossyLink    MiddlewareState = "LOSSY_LINK"
 	StateTrafficSpike MiddlewareState = "TRAFFIC_SPIKE"
 )
+
+// Declaração do novo contador dedicado às mensagens recuperadas do disco (Flush)
+var RecoveredMessagesCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "middleware_recovered_messages_total",
+		Help: "Total de mensagens recuperadas e entregues do disco apos o outage",
+	},
+	[]string{"strategy"},
+)
+
+// (Nota: Certifique-se de que ActiveStrategyGauge, DeliveryLatencyGauge e DiskBufferGauge
+// também estejam declarados neste arquivo ou em seu arquivo de métricas principal).
+
+func init() {
+	// Registra o novo contador no coletor padrão do Prometheus
+	prometheus.MustRegister(RecoveredMessagesCounter)
+}
 
 type SystemMetrics struct {
 	mu              sync.RWMutex
