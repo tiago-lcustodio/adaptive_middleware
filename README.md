@@ -23,7 +23,7 @@ sudo killall main (as vezes só isso resolve)
 Ou force pelo número da porta:  
 sudo fuser -k 8082/tcp (funciona eventualmente)
 
-Se falhar derrrubar os containeres todos da aplicação  
+Se falhar derrrubar os containeres todos da aplicação:  
 sudo systemctl stop docker containerd  
 sudo killall -9 containerd-shim containerd-shim-runc-v2  
 sudo systemctl start containerd docker  
