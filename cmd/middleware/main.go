@@ -18,7 +18,7 @@ import (
 
 func main() {
 	fmt.Println("==================================================================")
-	fmt.Println("     INICIALIZANDO MIDDLEWARE RESILIENTE ADAPTATIVO (UNIOESTE)    ")
+	fmt.Println("     INICIALIZANDO MIDDLEWARE    ")
 	fmt.Println("==================================================================")
 
 	cfg := config.LoadConfig()
