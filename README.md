@@ -1,26 +1,27 @@
 # adaptive_middleware
 adaptive_middleware
 
-
+## para derrubar os containeres, subir e executar
 docker-compose -f deployments/docker-compose.yml down  
 docker-compose -f deployments/docker-compose.yml up -d  
 go run cmd/middleware/main.go
 
+## template de mensagem enviada pelo TTS
 0A14
 
-
-Falha 2  
+## Como simular a Falha Total (Falha 2)  
 docker stop mosquitto_unioeste_downstream  
-docker start mosquitto_unioeste_downstream
+docker start mosquitto_unioeste_downstream  
+(não tem funcionado adequadamente)
 
-Outra opção  
+Outra opção que funciona adequadamente:  
 sudo iptables -A OUTPUT -p tcp --dport 1884 -j REJECT  
 sudo iptables -D OUTPUT -p tcp --dport 1884 -j REJECT  
 
-Se precisar derrubar o Prometheus  
-sudo killall main  
+## Se precisar derrubar o Prometheus quando ele trava:   
+sudo killall main (as vezes só isso resolve)  
 Ou force pelo número da porta:  
-sudo fuser -k 8082/tcp  
+sudo fuser -k 8082/tcp (funciona eventualmente)
 
 Se falhar derrrubar os containeres todos da aplicação  
 sudo systemctl stop docker containerd  
