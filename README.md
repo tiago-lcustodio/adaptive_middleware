@@ -29,3 +29,6 @@ sudo killall -9 containerd-shim containerd-shim-runc-v2
 sudo systemctl start containerd docker  
 sudo docker rm -f $(sudo docker ps -aq)  
 sudo docker compose -f deployments/docker-compose.yml up -d  
+
+## a aplicação receiver é:  
+https://github.com/tiago-lcustodio/mqtt_backend_receiver
