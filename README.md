@@ -1,5 +1,7 @@
 # adaptive_middleware
-adaptive_middleware
+adaptive_middleware  
+
+Projeto em desenvolvimento de pesquisa de mestrado  
 
 ## para derrubar os containeres, subir e executar
 docker-compose -f deployments/docker-compose.yml down  
