@@ -6,7 +6,7 @@ services:
     container_name: mosquitto_unioeste_downstream
     restart: unless-stopped
     ports:
-      - "1884:1883" # Mapeia a porta 1883 interna do container para a 1884 do seu Linux (Lenovo)
+      - "1884:1883" # Porta 1883 interna do Mosquitto exposta como 1884 no host
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
@@ -17,19 +17,18 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "9090:9090" # Porta da interface de consultas do Prometheus
-      - "8082:8082" # Porta de métricas do middleware exposta para a máquina hospedeira (localhost)
+      - "9090:9090" # Interface web/API do Prometheus
     extra_hosts:
-      - "host.docker.internal:host-gateway" # Permite ao container falar com o host Linux
+      - "host.docker.internal:host-gateway" # Permite ao Prometheus acessar serviços rodando no host
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana_unioeste
     restart: unless-stopped
     ports:
-      - "3000:3000" # Porta de acesso aos painéis visuais      
+      - "3000:3000" # Interface web do Grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin # Senha padrão para seu login inicial
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana_storage:/var/lib/grafana
 
