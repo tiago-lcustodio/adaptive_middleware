@@ -23,7 +23,8 @@ sudo iptables -D OUTPUT -p tcp --dport 1884 -j REJECT
 ## Se precisar derrubar o Prometheus quando ele trava:   
 sudo killall main (as vezes só isso resolve)  
 Ou force pelo número da porta:  
-sudo fuser -k 8082/tcp (funciona eventualmente)
+sudo fuser -k 8082/tcp (funciona eventualmente)  
+sudo lsof -i :8082 (conferir se liberou)  
 
 Se falhar derrrubar os containeres todos da aplicação:  
 sudo systemctl stop docker containerd  
